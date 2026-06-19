@@ -1,5 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
+const cors = require("cors");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 
 dotenv.config();
@@ -7,6 +8,15 @@ dotenv.config();
 const app = express();
 
 const PORT = process.env.PORT || 5000;
+
+// Middleware
+
+app.use(cors({
+  origin: process.env.CLIENT_URL,
+  credentials: true,
+}));
+
+app.use(express.json());
 
 const uri = process.env.MONGODB_URI;
 
@@ -27,10 +37,13 @@ async function run() {
 
     const db = client.db("fitverseDB");
 
+    // Collections
+
     const classesCollection = db.collection("classes");
 
-
+    // ==========================
     // GET ALL CLASSES
+    // ==========================
 
     app.get("/classes", async (req, res) => {
 
@@ -40,12 +53,24 @@ async function run() {
 
     });
 
+    // ==========================
+    // ROOT ROUTE
+    // ==========================
+
+    app.get("/", (req, res) => {
+
+      res.send({
+        success: true,
+        message: "Fitverse Server Running Successfully",
+      });
+
+    });
+
+    // ==========================
 
     await client.db("admin").command({ ping: 1 });
 
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    console.log("MongoDB Ping Successful");
 
   } catch (error) {
 
@@ -56,13 +81,7 @@ async function run() {
 
 run().catch(console.dir);
 
-
-app.get("/", (req, res) => {
-
-  res.send("Server is running");
-
-});
-
+// Start Server
 
 app.listen(PORT, () => {
 
