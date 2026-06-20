@@ -160,13 +160,87 @@ app.get("/trainer-applications/:email", async (req, res) => {
   res.send(result);
 
 });
+// total trainer applications
+app.get("/trainer-applications", async (req, res) => {
 
+  const result = await trainerApplicationsCollection
+    .find()
+    .toArray();
 
+  res.send(result);
+
+});
 //====admin panel====
 //Total users
 app.get("/users", async (req, res) => {
   const users = await usersCollection.find().toArray();
   res.send(users);
+});
+
+//approve trainer
+app.patch("/trainer-applications/approve/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const filter = {
+    _id: new ObjectId(id),
+  };
+
+  const updateDoc = {
+
+    $set: {
+
+      status: "approved",
+
+      feedback: "",
+
+    },
+
+  };
+
+  const result =
+    await trainerApplicationsCollection.updateOne(
+      filter,
+      updateDoc
+    );
+
+  res.send(result);
+
+});
+
+//reject trainer
+app.patch("/trainer-applications/reject/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const { feedback } = req.body;
+
+  const filter = {
+
+    _id: new ObjectId(id),
+
+  };
+
+  const updateDoc = {
+
+    $set: {
+
+      status: "rejected",
+
+      feedback: feedback,
+
+    },
+
+  };
+
+  const result =
+    await trainerApplicationsCollection.updateOne(
+      filter,
+      updateDoc
+    );
+
+  res.send(result);
+
 });
 
     // ==========================
