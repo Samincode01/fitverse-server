@@ -38,6 +38,7 @@ async function run() {
     const classesCollection = db.collection("classes");
 const trainerApplicationsCollection =
   db.collection("trainer_applications");
+  const usersCollection = db.collection("user");
     // ==========================
     // GET ALL CLASSES
     // ==========================
@@ -131,7 +132,7 @@ app.get("/favourites/:userId", async (req, res) => {
   res.send(result);
 
 });
-
+ //======user panel=====
   //Apply for trainer
   app.post("/trainer-applications", async (req, res) => {
 
@@ -158,6 +159,14 @@ app.get("/trainer-applications/:email", async (req, res) => {
 
   res.send(result);
 
+});
+
+
+//====admin panel====
+//Total users
+app.get("/users", async (req, res) => {
+  const users = await usersCollection.find().toArray();
+  res.send(users);
 });
 
     // ==========================
