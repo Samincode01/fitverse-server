@@ -40,17 +40,26 @@ const trainerApplicationsCollection =
   db.collection("trainer_applications");
   const usersCollection = db.collection("user");
   const bookingsCollection = db.collection("bookings");
+  const forumsCollection = db.collection("forums");
     // ==========================
     // GET ALL CLASSES
     // ==========================
 
     app.get("/classes", async (req, res) => {
 
-      const result = await classesCollection.find().toArray();
+  const result = await classesCollection
 
-      res.send(result);
+    .find({
 
-    });
+      status: "approved",
+
+    })
+
+    .toArray();
+
+  res.send(result);
+
+});
 
     // ==========================
     // GET SINGLE CLASS
@@ -125,6 +134,504 @@ app.get("/classes/pending", async (req,res)=>{
   };
 
   const result = await favouritesCollection.insertOne(doc);
+
+  res.send(result);
+
+});
+
+//Forum section
+//Forums
+app.get("/forums", async (req, res) => {
+
+  const result = await forumsCollection
+
+    .find({
+
+      status: "approved",
+
+    })
+
+    .sort({ createdAt: -1 })
+
+    .toArray();
+
+  res.send(result);
+
+});
+//pending forum
+app.get("/forums/all", async (req, res) => {
+
+  const result = await forumsCollection
+
+    .find()
+
+    .sort({ createdAt: -1 })
+
+    .toArray();
+
+  res.send(result);
+
+});
+//approve forum
+app.get("/forums/pending", async (req, res) => {
+
+  const result = await forumsCollection
+
+    .find({
+
+      status: "pending",
+
+    })
+
+    .toArray();
+
+  res.send(result);
+
+});
+
+//Get single forum
+app.get("/forums/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const result = await forumsCollection.findOne({
+
+    _id: new ObjectId(id),
+
+  });
+
+  res.send(result);
+
+});
+
+//Post forum
+app.post("/forums", async (req, res) => {
+
+  try {
+
+    const forum = req.body;
+
+    const forumData = {
+
+      title: forum.title,
+
+      image: forum.image,
+
+      description: forum.description,
+
+      author: forum.author,
+
+      authorEmail: forum.authorEmail,
+
+      authorImage: forum.authorImage,
+
+      role: forum.role,
+
+      status: "pending",
+
+      likes: 0,
+
+      dislikes: 0,
+
+      comments: [],
+
+      createdAt: new Date(),
+
+    };
+
+    const result = await forumsCollection.insertOne(forumData);
+
+    res.send(result);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).send({
+
+      message: "Failed to create forum",
+
+    });
+
+  }
+
+});
+
+//Add comment
+app.patch("/forums/comment/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const comment = req.body;
+
+  const result = await forumsCollection.updateOne(
+
+    {
+
+      _id: new ObjectId(id),
+
+    },
+
+    {
+
+      $push: {
+
+        comments: comment,
+
+      },
+
+    }
+
+  );
+
+  res.send(result);
+
+});
+app.patch("/forums/comment/edit/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const { index, text } = req.body;
+
+  const forum = await forumsCollection.findOne({
+
+    _id: new ObjectId(id),
+
+  });
+
+  forum.comments[index].text = text;
+
+  const result = await forumsCollection.updateOne(
+
+    {
+
+      _id: new ObjectId(id),
+
+    },
+
+    {
+
+      $set: {
+
+        comments: forum.comments,
+
+      },
+
+    }
+
+  );
+
+  res.send(result);
+
+});
+//delete comment
+app.patch("/forums/comment/delete/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const { index } = req.body;
+
+  const forum = await forumsCollection.findOne({
+
+    _id: new ObjectId(id),
+
+  });
+
+  forum.comments.splice(index, 1);
+
+  const result = await forumsCollection.updateOne(
+
+    {
+
+      _id: new ObjectId(id),
+
+    },
+
+    {
+
+      $set: {
+
+        comments: forum.comments,
+
+      },
+
+    }
+
+  );
+
+  res.send(result);
+
+});
+
+//add reply
+app.patch("/forums/reply/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const { commentIndex, reply } = req.body;
+
+  const forum = await forumsCollection.findOne({
+
+    _id: new ObjectId(id),
+
+  });
+
+  if (!forum.comments[commentIndex].replies) {
+
+    forum.comments[commentIndex].replies = [];
+
+  }
+
+  forum.comments[commentIndex].replies.push(reply);
+
+  const result = await forumsCollection.updateOne(
+
+    {
+
+      _id: new ObjectId(id),
+
+    },
+
+    {
+
+      $set: {
+
+        comments: forum.comments,
+
+      },
+
+    }
+
+  );
+
+  res.send(result);
+
+});
+
+//like forum
+app.patch("/forums/like/:id", async (req,res)=>{
+
+  const id = req.params.id;
+
+  const { email } = req.body;
+
+  const forum = await forumsCollection.findOne({
+    _id: new ObjectId(id)
+  });
+
+  const alreadyLiked =
+    forum.likedUsers?.includes(email);
+
+  if(alreadyLiked){
+
+    await forumsCollection.updateOne(
+
+      {
+        _id:new ObjectId(id)
+      },
+
+      {
+
+        $inc:{
+          likes:-1
+        },
+
+        $pull:{
+          likedUsers:email
+        }
+
+      }
+
+    );
+
+    return res.send({
+
+      liked:false
+
+    });
+
+  }
+
+  await forumsCollection.updateOne(
+
+    {
+      _id:new ObjectId(id)
+    },
+
+    {
+
+      $inc:{
+        likes:1
+      },
+
+      $addToSet:{
+        likedUsers:email
+      }
+
+    }
+
+  );
+
+  res.send({
+
+    liked:true
+
+  });
+
+});
+
+//dislike forum
+app.patch("/forums/dislike/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const { email } = req.body;
+
+  const forum = await forumsCollection.findOne({
+
+    _id: new ObjectId(id),
+
+  });
+
+  const alreadyDisliked =
+
+    forum.dislikedUsers?.includes(email);
+
+  // Undo dislike
+
+  if (alreadyDisliked) {
+
+    await forumsCollection.updateOne(
+
+      {
+
+        _id: new ObjectId(id),
+
+      },
+
+      {
+
+        $inc: {
+
+          dislikes: -1,
+
+        },
+
+        $pull: {
+
+          dislikedUsers: email,
+
+        },
+
+      }
+
+    );
+
+    return res.send({
+
+      disliked: false,
+
+    });
+
+  }
+
+  // Add dislike
+
+  await forumsCollection.updateOne(
+
+    {
+
+      _id: new ObjectId(id),
+
+    },
+
+    {
+
+      $inc: {
+
+        dislikes: 1,
+
+      },
+
+      $addToSet: {
+
+        dislikedUsers: email,
+
+      },
+
+    }
+
+  );
+
+  res.send({
+
+    disliked: true,
+
+  });
+
+});
+
+//reject forum
+app.patch("/forums/reject/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const result = await forumsCollection.updateOne(
+
+    {
+
+      _id: new ObjectId(id),
+
+    },
+
+    {
+
+      $set: {
+
+        status: "rejected",
+
+      },
+
+    }
+
+  );
+
+  res.send(result);
+
+});
+
+//delete forum
+app.delete("/forums/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const result = await forumsCollection.deleteOne({
+
+    _id: new ObjectId(id),
+
+  });
+
+  res.send(result);
+
+});
+//approval
+app.patch("/forums/approve/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const result = await forumsCollection.updateOne(
+
+    {
+      _id: new ObjectId(id),
+    },
+
+    {
+      $set: {
+        status: "approved",
+      },
+    }
+
+  );
 
   res.send(result);
 
