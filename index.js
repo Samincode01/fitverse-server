@@ -36,7 +36,8 @@ async function run() {
     // Collections
 
     const classesCollection = db.collection("classes");
-
+const trainerApplicationsCollection =
+  db.collection("trainer_applications");
     // ==========================
     // GET ALL CLASSES
     // ==========================
@@ -117,6 +118,7 @@ async function run() {
 
 });
 
+
 //Get favourites
 app.get("/favourites/:userId", async (req, res) => {
 
@@ -125,6 +127,34 @@ app.get("/favourites/:userId", async (req, res) => {
   const result = await favouritesCollection
     .find({ userId })
     .toArray();
+
+  res.send(result);
+
+});
+
+  //Apply for trainer
+  app.post("/trainer-applications", async (req, res) => {
+
+  const application = req.body;
+
+  application.status = "unapproved";
+
+  application.createdAt = new Date();
+
+  const result = await trainerApplicationsCollection.insertOne(application);
+
+  res.send(result);
+
+});
+
+//check for existing application for trainer
+app.get("/trainer-applications/:email", async (req, res) => {
+
+  const email = req.params.email;
+
+  const result = await trainerApplicationsCollection.findOne({
+    email: email,
+  });
 
   res.send(result);
 
