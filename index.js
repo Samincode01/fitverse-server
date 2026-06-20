@@ -39,6 +39,7 @@ async function run() {
 const trainerApplicationsCollection =
   db.collection("trainer_applications");
   const usersCollection = db.collection("user");
+  const bookingsCollection = db.collection("bookings");
     // ==========================
     // GET ALL CLASSES
     // ==========================
@@ -54,7 +55,17 @@ const trainerApplicationsCollection =
     // ==========================
     // GET SINGLE CLASS
     // ==========================
+app.get("/classes/pending", async (req,res)=>{
 
+  const result = await classesCollection
+    .find({
+      status:"pending"
+    })
+    .toArray();
+
+  res.send(result);
+
+});
     app.get("/classes/:id", async (req, res) => {
 
       const id = req.params.id;
@@ -182,29 +193,54 @@ app.patch("/trainer-applications/approve/:id", async (req, res) => {
 
   const id = req.params.id;
 
-  const filter = {
-    _id: new ObjectId(id),
-  };
+  const application =
+    await trainerApplicationsCollection.findOne({
+      _id: new ObjectId(id),
+    });
 
-  const updateDoc = {
+  if (!application) {
 
-    $set: {
+    return res.status(404).send({
+      message: "Application not found",
+    });
 
-      status: "approved",
+  }
 
-      feedback: "",
+  // Update application status
 
+  await trainerApplicationsCollection.updateOne(
+    {
+      _id: new ObjectId(id),
     },
+    {
+      $set: {
+        status: "approved",
+        feedback: "",
+      },
+    }
+  );
 
-  };
+  // Update user role
 
-  const result =
-    await trainerApplicationsCollection.updateOne(
-      filter,
-      updateDoc
+  const userResult =
+    await usersCollection.updateOne(
+      {
+        email: application.email,
+      },
+      {
+        $set: {
+          role: "trainer",
+        },
+      }
     );
 
-  res.send(result);
+  res.send({
+
+    success: true,
+
+    userModified: userResult.modifiedCount,
+
+  });
 
 });
 
@@ -238,6 +274,219 @@ app.patch("/trainer-applications/reject/:id", async (req, res) => {
       filter,
       updateDoc
     );
+
+  res.send(result);
+
+});
+
+//pending class
+app.get("/classes/pending", async (req, res) => {
+
+  const result = await classesCollection
+
+    .find({
+      status: "pending"
+    })
+
+    .toArray();
+
+  res.send(result);
+
+});
+//approve class
+app.patch("/classes/approve/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const result = await classesCollection.updateOne(
+
+    {
+      _id: new ObjectId(id),
+    },
+
+    {
+      $set: {
+        status: "approved",
+      },
+    }
+
+  );
+
+  res.send(result);
+
+});
+
+//reject class
+app.patch("/classes/reject/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const result = await classesCollection.updateOne(
+
+    {
+      _id: new ObjectId(id),
+    },
+
+    {
+      $set: {
+        status: "rejected",
+      },
+    }
+
+  );
+
+  res.send(result);
+
+});
+//====Trainer===
+// Trainer Dashboard Stats
+
+app.get("/trainer-stats/:email", async (req, res) => {
+
+  const email = req.params.email;
+
+  const totalClasses = await classesCollection.countDocuments({
+    trainerEmail: email,
+  });
+
+  const trainerClasses = await classesCollection
+    .find({
+      trainerEmail: email,
+    })
+    .toArray();
+
+  const classIds = trainerClasses.map(item => item._id.toString());
+
+  const totalStudents = await bookingsCollection.countDocuments({
+    classId: {
+      $in: classIds,
+    },
+  });
+
+  res.send({
+
+    totalClasses,
+
+    totalStudents,
+
+  });
+
+});
+
+//Post a class
+app.post("/classes", async (req, res) => {
+
+  try {
+
+    const classData = req.body;
+
+    classData.status = "pending";
+
+    classData.students = 0;
+
+    classData.createdAt = new Date();
+
+    const result = await classesCollection.insertOne(classData);
+
+    res.send(result);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).send({
+      message: "Failed to add class",
+    });
+
+  }
+
+});
+
+//get my classes
+app.get("/trainer-classes/:email", async (req, res) => {
+
+  const email = req.params.email;
+
+  const result = await classesCollection
+
+    .find({
+      trainerEmail: email,
+    })
+
+    .toArray();
+
+  res.send(result);
+
+});
+
+//update class
+app.patch("/classes/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const updated = req.body;
+
+  const result = await classesCollection.updateOne(
+
+    {
+      _id: new ObjectId(id),
+    },
+
+    {
+      $set: {
+
+        title: updated.title,
+
+        image: updated.image,
+
+        category: updated.category,
+
+        level: updated.level,
+
+        duration: updated.duration,
+
+        schedule: updated.schedule,
+
+        price: Number(updated.price),
+
+        description: updated.description,
+
+      },
+
+    }
+
+  );
+
+  res.send(result);
+
+});
+//delete class
+app.delete("/classes/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const result = await classesCollection.deleteOne({
+
+    _id: new ObjectId(id),
+
+  });
+
+  res.send(result);
+
+});
+
+//class students
+app.get("/class-students/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const result = await bookingsCollection
+
+    .find({
+      classId: id,
+    })
+
+    .toArray();
 
   res.send(result);
 
