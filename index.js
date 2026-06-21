@@ -236,6 +236,25 @@ app.get("/bookings/:email", async (req, res) => {
   res.send(result);
 
 });
+
+//transactions
+app.get("/transactions", async (req, res) => {
+
+  const result = await bookingsCollection
+
+    .find()
+
+    .sort({
+
+      createdAt: -1,
+
+    })
+
+    .toArray();
+
+  res.send(result);
+
+});
 //Forum section
 //Forums
 app.get("/forums", async (req, res) => {
