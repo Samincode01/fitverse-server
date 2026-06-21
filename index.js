@@ -255,6 +255,78 @@ app.get("/transactions", async (req, res) => {
   res.send(result);
 
 });
+
+//trainer students
+app.get("/trainer-classes/:email", async (req, res) => {
+
+  const email = req.params.email;
+
+  const classes = await classesCollection
+
+    .find({
+
+      trainerEmail: email,
+
+    })
+
+    .toArray();
+
+  const updatedClasses = await Promise.all(
+
+    classes.map(async (item) => {
+
+      const totalStudents =
+
+        await bookingsCollection.countDocuments({
+
+          classId: item._id.toString(),
+
+        });
+
+      return {
+
+        ...item,
+
+        students: totalStudents,
+
+      };
+
+    })
+
+  );
+
+  res.send(updatedClasses);
+
+});
+
+//class students
+app.get("/class-students/:id", async (req, res) => {
+
+  const classId = req.params.id;
+
+  const result = await bookingsCollection
+
+    .find({
+
+      classId: classId,
+
+    })
+
+    .project({
+
+      userName: 1,
+
+      userEmail: 1,
+
+      userImage: 1,
+
+    })
+
+    .toArray();
+
+  res.send(result);
+
+});
 //Forum section
 //Forums
 app.get("/forums", async (req, res) => {
