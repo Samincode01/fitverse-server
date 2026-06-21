@@ -179,7 +179,19 @@ app.get("/classes/pending", async (req,res)=>{
 //Forums
 app.get("/forums", async (req, res) => {
 
-  const result = await forumsCollection
+  const page = parseInt(req.query.page) || 1;
+
+  const limit = parseInt(req.query.limit) || 6;
+
+  const skip = (page - 1) * limit;
+
+  const total = await forumsCollection.countDocuments({
+
+    status: "approved",
+
+  });
+
+  const forums = await forumsCollection
 
     .find({
 
@@ -187,11 +199,29 @@ app.get("/forums", async (req, res) => {
 
     })
 
-    .sort({ createdAt: -1 })
+    .sort({
+
+      createdAt: -1,
+
+    })
+
+    .skip(skip)
+
+    .limit(limit)
 
     .toArray();
 
-  res.send(result);
+  res.send({
+
+    forums,
+
+    total,
+
+    currentPage: page,
+
+    totalPages: Math.ceil(total / limit),
+
+  });
 
 });
 //pending forum
