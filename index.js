@@ -851,6 +851,46 @@ app.patch("/trainer-applications/reject/:id", async (req, res) => {
   res.send(result);
 
 });
+
+//manage trainer
+app.get("/trainers", async (req, res) => {
+
+  const result = await usersCollection
+
+    .find({
+
+      role: "trainer"
+
+    })
+
+    .toArray();
+
+  res.send(result);
+
+});
+
+//demote trainer
+app.patch("/trainers/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const result = await usersCollection.updateOne(
+
+    {
+      _id: new ObjectId(id),
+    },
+
+    {
+      $set: {
+        role: "user",
+      },
+    }
+
+  );
+
+  res.send(result);
+
+});
 // all classes
 app.get("/classes/all", async (req, res) => {
 
