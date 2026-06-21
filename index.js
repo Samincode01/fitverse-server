@@ -202,6 +202,40 @@ app.post("/bookings", async (req, res) => {
   res.send(result);
 
 });
+app.get("/bookings-count", async (req, res) => {
+
+  const total = await bookingsCollection.countDocuments();
+
+  res.send({
+
+    total,
+
+  });
+
+});
+app.get("/bookings/:email", async (req, res) => {
+
+  const email = req.params.email;
+
+  const result = await bookingsCollection
+
+    .find({
+
+      userEmail: email,
+
+    })
+
+    .sort({
+
+      createdAt: -1,
+
+    })
+
+    .toArray();
+
+  res.send(result);
+
+});
 //Forum section
 //Forums
 app.get("/forums", async (req, res) => {
