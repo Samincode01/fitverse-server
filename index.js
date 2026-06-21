@@ -45,15 +45,47 @@ const trainerApplicationsCollection =
     // GET ALL CLASSES
     // ==========================
 
-    app.get("/classes", async (req, res) => {
+app.get("/classes", async (req, res) => {
+
+  const search = req.query.search || "";
+
+  const category = req.query.category || "";
+
+  let query = {
+
+    status: "approved",
+
+  };
+
+  // Search by class title
+
+  if (search) {
+
+    query.title = {
+
+      $regex: search,
+
+      $options: "i",
+
+    };
+
+  }
+
+  // Filter by category
+
+  if (category && category !== "All") {
+
+    query.category = {
+
+      $in: [category],
+
+    };
+
+  }
 
   const result = await classesCollection
 
-    .find({
-
-      status: "approved",
-
-    })
+    .find(query)
 
     .toArray();
 
