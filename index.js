@@ -330,6 +330,22 @@ app.patch("/forums/comment/:id", async (req, res) => {
 
   const comment = req.body;
 
+  const user = await usersCollection.findOne({
+
+    email: comment.email,
+
+  });
+
+  if (user?.status === "blocked") {
+
+    return res.status(403).send({
+
+      message: "Action restricted by Admin",
+
+    });
+
+  }
+
   const result = await forumsCollection.updateOne(
 
     {
@@ -718,9 +734,25 @@ app.get("/favourites/:userId", async (req, res) => {
 });
  //======user panel=====
   //Apply for trainer
-  app.post("/trainer-applications", async (req, res) => {
+app.post("/trainer-applications", async (req, res) => {
 
   const application = req.body;
+
+  const user = await usersCollection.findOne({
+
+    email: application.email,
+
+  });
+
+  if (user?.status === "blocked") {
+
+    return res.status(403).send({
+
+      message: "Action restricted by Admin",
+
+    });
+
+  }
 
   application.status = "unapproved";
 
@@ -871,6 +903,104 @@ app.get("/trainers", async (req, res) => {
 
 //demote trainer
 app.patch("/trainers/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const result = await usersCollection.updateOne(
+
+    {
+      _id: new ObjectId(id),
+    },
+
+    {
+      $set: {
+        role: "user",
+      },
+    }
+
+  );
+
+  res.send(result);
+
+});
+
+//block user
+app.patch("/users/block/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const result = await usersCollection.updateOne(
+
+    {
+      _id: new ObjectId(id)
+    },
+
+    {
+      $set: {
+        status: "blocked"
+      }
+    }
+
+  );
+
+  res.send(result);
+
+});
+
+//unblock user
+app.patch("/users/unblock/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const result = await usersCollection.updateOne(
+
+    {
+      _id: new ObjectId(id)
+    },
+
+    {
+      $unset: {
+        status: ""
+      }
+    }
+
+  );
+
+  res.send(result);
+
+});
+
+//make admin
+app.patch("/users/make-admin/:id", async (req, res) => {
+
+  const id = req.params.id;
+
+  const result = await usersCollection.updateOne(
+
+    {
+
+      _id: new ObjectId(id),
+
+    },
+
+    {
+
+      $set: {
+
+        role: "admin",
+
+      },
+
+    }
+
+  );
+
+  res.send(result);
+
+});
+
+//demote to user from admin
+app.patch("/users/demote-admin/:id", async (req, res) => {
 
   const id = req.params.id;
 
