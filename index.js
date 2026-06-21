@@ -75,19 +75,7 @@ app.get("/classes/pending", async (req,res)=>{
   res.send(result);
 
 });
-    app.get("/classes/:id", async (req, res) => {
 
-      const id = req.params.id;
-
-      const query = {
-        _id: new ObjectId(id),
-      };
-
-      const result = await classesCollection.findOne(query);
-
-      res.send(result);
-
-    });
 
     // ==========================
     // ROOT ROUTE
@@ -785,7 +773,20 @@ app.patch("/trainer-applications/reject/:id", async (req, res) => {
   res.send(result);
 
 });
+// all classes
+app.get("/classes/all", async (req, res) => {
 
+  const result = await classesCollection
+
+    .find()
+
+    .sort({ createdAt: -1 })
+
+    .toArray();
+
+  res.send(result);
+
+});
 //pending class
 app.get("/classes/pending", async (req, res) => {
 
@@ -800,6 +801,19 @@ app.get("/classes/pending", async (req, res) => {
   res.send(result);
 
 });
+    app.get("/classes/:id", async (req, res) => {
+
+      const id = req.params.id;
+
+      const query = {
+        _id: new ObjectId(id),
+      };
+
+      const result = await classesCollection.findOne(query);
+
+      res.send(result);
+
+    });
 //approve class
 app.patch("/classes/approve/:id", async (req, res) => {
 
