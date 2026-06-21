@@ -179,27 +179,49 @@ app.post("/bookings", async (req, res) => {
 
   const booking = req.body;
 
-  const exists = await bookingsCollection.findOne({
+  const user = await usersCollection.findOne({
 
-    userEmail: booking.userEmail,
-
-    classId: booking.classId,
+    email: booking.userEmail,
 
   });
 
-  if (exists) {
+  if (user?.status === "blocked") {
 
-    return res.send({
+    return res.status(403).send({
 
-      message: "Already booked",
+      message: "Action restricted by Admin",
 
     });
 
   }
 
-  const result = await bookingsCollection.insertOne(booking);
+  const result = await bookingsCollection.insertOne(
+
+    booking
+
+  );
 
   res.send(result);
+
+});
+
+app.get("/bookings/check", async (req, res) => {
+
+  const { email, classId } = req.query;
+
+  const booking = await bookingsCollection.findOne({
+
+    userEmail: email,
+
+    classId,
+
+  });
+
+  res.send({
+
+    booked: !!booking,
+
+  });
 
 });
 app.get("/bookings-count", async (req, res) => {
@@ -967,7 +989,19 @@ app.get("/users", async (req, res) => {
   const users = await usersCollection.find().toArray();
   res.send(users);
 });
+app.get("/users/:email", async (req, res) => {
 
+  const email = req.params.email;
+
+  const user = await usersCollection.findOne({
+
+    email,
+
+  });
+
+  res.send(user);
+
+});
 //approve trainer
 app.patch("/trainer-applications/approve/:id", async (req, res) => {
 
@@ -1347,21 +1381,7 @@ app.post("/classes", async (req, res) => {
 });
 
 //get my classes
-app.get("/trainer-classes/:email", async (req, res) => {
 
-  const email = req.params.email;
-
-  const result = await classesCollection
-
-    .find({
-      trainerEmail: email,
-    })
-
-    .toArray();
-
-  res.send(result);
-
-});
 
 //update class
 app.patch("/classes/:id", async (req, res) => {
