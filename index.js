@@ -47,17 +47,19 @@ const trainerApplicationsCollection =
 
 app.get("/classes", async (req, res) => {
 
+  const page = parseInt(req.query.page) || 1;
+
+  const limit = parseInt(req.query.limit) || 6;
+
+  const skip = (page - 1) * limit;
+
   const search = req.query.search || "";
 
   const category = req.query.category || "";
 
   let query = {
-
     status: "approved",
-
   };
-
-  // Search by class title
 
   if (search) {
 
@@ -71,8 +73,6 @@ app.get("/classes", async (req, res) => {
 
   }
 
-  // Filter by category
-
   if (category && category !== "All") {
 
     query.category = {
@@ -83,13 +83,29 @@ app.get("/classes", async (req, res) => {
 
   }
 
-  const result = await classesCollection
+  const total = await classesCollection.countDocuments(query);
+
+  const classes = await classesCollection
 
     .find(query)
 
+    .skip(skip)
+
+    .limit(limit)
+
     .toArray();
 
-  res.send(result);
+  res.send({
+
+    classes,
+
+    total,
+
+    currentPage: page,
+
+    totalPages: Math.ceil(total / limit),
+
+  });
 
 });
 
