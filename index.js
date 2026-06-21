@@ -174,7 +174,34 @@ app.get("/classes/pending", async (req,res)=>{
   res.send(result);
 
 });
+//booking
+app.post("/bookings", async (req, res) => {
 
+  const booking = req.body;
+
+  const exists = await bookingsCollection.findOne({
+
+    userEmail: booking.userEmail,
+
+    classId: booking.classId,
+
+  });
+
+  if (exists) {
+
+    return res.send({
+
+      message: "Already booked",
+
+    });
+
+  }
+
+  const result = await bookingsCollection.insertOne(booking);
+
+  res.send(result);
+
+});
 //Forum section
 //Forums
 app.get("/forums", async (req, res) => {
@@ -222,6 +249,29 @@ app.get("/forums", async (req, res) => {
     totalPages: Math.ceil(total / limit),
 
   });
+
+});
+app.get("/my-forums/:email", async (req, res) => {
+
+  const email = req.params.email;
+
+  const result = await forumsCollection
+
+    .find({
+
+      authorEmail: email,
+
+    })
+
+    .sort({
+
+      createdAt: -1,
+
+    })
+
+    .toArray();
+
+  res.send(result);
 
 });
 //pending forum
