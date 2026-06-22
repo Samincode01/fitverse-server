@@ -322,33 +322,7 @@ app.get("/trainer-classes/:email", async (req, res) => {
 });
 
 //class students
-app.get("/class-students/:id", async (req, res) => {
 
-  const classId = req.params.id;
-
-  const result = await bookingsCollection
-
-    .find({
-
-      classId: classId,
-
-    })
-
-    .project({
-
-      userName: 1,
-
-      userEmail: 1,
-
-      userImage: 1,
-
-    })
-
-    .toArray();
-
-  res.send(result);
-
-});
 //Forum section
 //Forums
 app.get("/forums", async (req, res) => {
@@ -1261,19 +1235,7 @@ app.get("/classes/all", async (req, res) => {
 
 });
 //pending class
-app.get("/classes/pending", async (req, res) => {
 
-  const result = await classesCollection
-
-    .find({
-      status: "pending"
-    })
-
-    .toArray();
-
-  res.send(result);
-
-});
     app.get("/classes/:id", async (req, res) => {
 
       const id = req.params.id;
