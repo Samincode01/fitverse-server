@@ -929,6 +929,22 @@ app.get("/favourites/:userId", async (req, res) => {
   res.send(result);
 
 });
+//delete favourites
+app.delete("/favourites/:userId/:classId", async (req, res) => {
+
+  const { userId, classId } = req.params;
+
+  const result = await favouritesCollection.deleteOne({
+
+    userId,
+
+    classId,
+
+  });
+
+  res.send(result);
+
+});
  //======user panel=====
   //Apply for trainer
 app.post("/trainer-applications", async (req, res) => {
