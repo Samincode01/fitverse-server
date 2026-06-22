@@ -7,7 +7,6 @@ dotenv.config();
 
 const app = express();
 
-const PORT = process.env.PORT || 5000;
 
 // Middleware
 
@@ -24,14 +23,8 @@ const client = new MongoClient(uri, {
   },
 });
 
-async function run() {
-  try {
-
-    await client.connect();
-
-    console.log("MongoDB Connected");
-
-    const db = client.db("fitverseDB");
+const PORT = process.env.PORT || 5000;
+ const db = client.db("fitverseDB");
 
     // Collections
 
@@ -41,9 +34,6 @@ const trainerApplicationsCollection =
   const usersCollection = db.collection("user");
   const bookingsCollection = db.collection("bookings");
   const forumsCollection = db.collection("forums");
-    // ==========================
-    // GET ALL CLASSES
-    // ==========================
 
 app.get("/classes", async (req, res) => {
 
@@ -129,14 +119,12 @@ app.get("/classes/pending", async (req,res)=>{
     // ROOT ROUTE
     // ==========================
 
-    app.get("/", (req, res) => {
-
-      res.send({
-        success: true,
-        message: "Fitverse Server Running Successfully",
-      });
-
-    });
+   app.get("/", (req, res) => {
+return res.status(200).json({
+success: true,
+message: "Fitverse API Running",
+});
+});
 
     //Favourites
     const favouritesCollection = db.collection("favourites");
@@ -1433,21 +1421,6 @@ app.get("/class-students/:id", async (req, res) => {
   res.send(result);
 
 });
-
-    // ==========================
-
-    await client.db("admin").command({ ping: 1 });
-
-    console.log("MongoDB Ping Successful");
-
-  } catch (error) {
-
-    console.log(error);
-
-  }
-}
-
-run().catch(console.dir);
 
 // Start Server
 
